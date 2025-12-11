@@ -54,7 +54,7 @@ const LoginScreen = () => {
         'Success', 
         'Account created! Please verify your email if required.',
         [
-          { text: 'OK', onPress: () => navigation.navigate('Onboarding' as never) }
+          { text: 'OK' }
         ]
       );
     }

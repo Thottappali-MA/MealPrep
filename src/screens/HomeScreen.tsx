@@ -3,9 +3,11 @@ import { View, ScrollView, StyleSheet } from 'react-native';
 import { Text, Card, Button, Title, Paragraph, ProgressBar, IconButton } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { MOCK_WEEKLY_PLAN } from '../constants/mockData';
+import { useAuth } from '../contexts/AuthContext';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
+  const { signOut } = useAuth();
   const todayPlan = MOCK_WEEKLY_PLAN.days[0]; // Mocking today as Monday
   const todayMeal = todayPlan.meals.find(m => m.type === 'Dinner');
   
@@ -23,10 +25,13 @@ const HomeScreen = () => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text variant="headlineMedium" style={styles.greeting}>Hi, Chef!</Text>
-        <Text variant="bodyLarge" style={styles.subtext}>
-            {isCookingDay ? "It's a cooking day! 🍳" : "Off duty today! 🛋️"}
-        </Text>
+        <View style={styles.headerContent}>
+          <Text variant="headlineMedium" style={styles.greeting}>Hi, Chef!</Text>
+          <Text variant="bodyLarge" style={styles.subtext}>
+              {isCookingDay ? "It's a cooking day! 🍳" : "Off duty today! 🛋️"}
+          </Text>
+        </View>
+        <IconButton icon="logout" onPress={signOut} />
       </View>
 
       {/* Weekly Progress Section */}
@@ -116,6 +121,12 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 10,
     marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerContent: {
+    flex: 1,
   },
   greeting: {
     fontWeight: 'bold',

@@ -3,6 +3,7 @@ import { View, ScrollView, StyleSheet } from 'react-native';
 import { Title, Text, Button, Chip, SegmentedButtons, ProgressBar } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 const CUISINES = ['Italian', 'Mexican', 'Indian', 'Asian', 'Mediterranean', 'American', 'French', 'Vegetarian'];
 const SKILL_LEVELS = [
@@ -13,16 +14,18 @@ const SKILL_LEVELS = [
 const SERVING_SIZES = [
   { value: '1', label: 'Just Me' },
   { value: '2', label: 'Couple' },
-  { value: '4', label: 'Family (4)' },
+  { value: 'family', label: 'Family' },
 ];
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const OnboardingScreen = () => {
   const navigation = useNavigation();
+  const { completeOnboarding } = useAuth();
   const [step, setStep] = useState(1);
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
   const [skillLevel, setSkillLevel] = useState('Beginner');
-  const [servingSize, setServingSize] = useState('1');
+  const [servingType, setServingType] = useState('1');
+  const [familyMembers, setFamilyMembers] = useState(4);
   const [cookingDays, setCookingDays] = useState<string[]>(['Mon', 'Wed', 'Fri']);
   const [loading, setLoading] = useState(false);
 
@@ -55,27 +58,36 @@ const OnboardingScreen = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        const finalServingSize = servingType === 'family' ? familyMembers : parseInt(servingType);
         // Save preferences to Supabase (Mocking table update for now)
-        console.log('Onboarding Data:', { selectedCuisines, skillLevel, servingSize, cookingDays });
+        console.log('Onboarding Data:', { selectedCuisines, skillLevel, servingSize: finalServingSize, cookingDays });
         
-        // Navigate to Home
-        // In a real app, update context/db here
+        // Complete onboarding in context
+        await completeOnboarding();
       }
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
-      // Force navigation for demo
-      navigation.navigate('Home' as never); 
     }
   };
 
   return (
     <View style={styles.container}>
-      <ProgressBar progress={step / 4} color="#FF6347" style={styles.progress} />
+      <View style={{ padding: 10, alignItems: 'center' }}>
+        <Text>Step {step} of 4</Text>
+      </View>
+      <View style={{ height: 10, width: '100%', marginBottom: 10 }}>
+        <ProgressBar progress={step / 4} color="#FF6347" style={{ height: 6, borderRadius: 3 }} />
+      </View>
       
-      <ScrollView contentContainerStyle={styles.content}>
-        {step === 1 && (
+      <View style={{ flex: 1, width: '100%' }}>
+        <ScrollView 
+          style={styles.scrollView} 
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {step === 1 && (
           <View>
             <Title style={styles.title}>What do you like to eat?</Title>
             <Text style={styles.subtitle}>Select your favorite cuisines</Text>
@@ -111,11 +123,34 @@ const OnboardingScreen = () => {
           <View>
             <Title style={styles.title}>Who are you cooking for?</Title>
             <SegmentedButtons
-              value={servingSize}
-              onValueChange={setServingSize}
+              value={servingType}
+              onValueChange={setServingType}
               buttons={SERVING_SIZES}
               style={styles.segmentedButton}
             />
+            
+            {servingType === 'family' && (
+              <View style={styles.familyContainer}>
+                <Text style={styles.subtitle}>How many people?</Text>
+                <View style={styles.counterContainer}>
+                  <Button 
+                    mode="outlined" 
+                    onPress={() => setFamilyMembers(Math.max(3, familyMembers - 1))}
+                    style={styles.counterButton}
+                  >
+                    -
+                  </Button>
+                  <Text style={styles.counterText}>{familyMembers}</Text>
+                  <Button 
+                    mode="outlined" 
+                    onPress={() => setFamilyMembers(familyMembers + 1)}
+                    style={styles.counterButton}
+                  >
+                    +
+                  </Button>
+                </View>
+              </View>
+            )}
           </View>
         )}
 
@@ -138,7 +173,8 @@ const OnboardingScreen = () => {
             </View>
           </View>
         )}
-      </ScrollView>
+        </ScrollView>
+      </View>
 
       <View style={styles.footer}>
         <Button mode="contained" onPress={handleNext} loading={loading} style={styles.button}>
@@ -157,6 +193,10 @@ const styles = StyleSheet.create({
   },
   progress: {
     height: 6,
+  },
+  scrollView: {
+    flex: 1,
+    width: '100%',
   },
   content: {
     padding: 20,
@@ -183,6 +223,22 @@ const styles = StyleSheet.create({
   },
   segmentedButton: {
     marginTop: 20,
+  },
+  familyContainer: {
+    marginTop: 30,
+    alignItems: 'center',
+  },
+  counterContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+  },
+  counterButton: {
+    minWidth: 50,
+  },
+  counterText: {
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   footer: {
     padding: 20,

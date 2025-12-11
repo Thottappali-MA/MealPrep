@@ -58,7 +58,7 @@ const AuthStack = () => {
 };
 
 const AppNavigator = () => {
-  const { session, loading } = useAuth();
+  const { session, loading, onboardingCompleted } = useAuth();
 
   if (loading) {
     return (
@@ -70,7 +70,15 @@ const AppNavigator = () => {
 
   return (
     <NavigationContainer>
-      {session ? <MainTabNavigator /> : <AuthStack />}
+      {!session ? (
+        <AuthStack />
+      ) : !onboardingCompleted ? (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+        </Stack.Navigator>
+      ) : (
+        <MainTabNavigator />
+      )}
     </NavigationContainer>
   );
 };
